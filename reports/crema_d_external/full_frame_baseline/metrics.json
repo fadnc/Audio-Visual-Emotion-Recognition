@@ -1,0 +1,305 @@
+{
+  "dataset": "CREMA-D",
+  "n_requested": 50,
+  "n_evaluated": 50,
+  "n_failed": 0,
+  "sample_selection": "50 clips, balanced by CREMA-D MultiModalVote; one clip per actor; seed 20261016",
+  "model": "checkpoints\\fusion_attention.pt",
+  "accuracy": 0.18,
+  "multimodal_vote_accuracy": 0.18,
+  "balanced_accuracy": 0.1875,
+  "macro_f1": 0.125,
+  "macro_ovr_auroc_6class": 0.6517090914956768,
+  "intended_label_accuracy": 0.22,
+  "intended_label_balanced_accuracy": 0.19444444444444442,
+  "intended_label_macro_f1": 0.14410256410256408,
+  "intended_label_macro_ovr_auroc_6class": 0.6752481111932331,
+  "intended_label_top2_accuracy_8outputs": 0.32,
+  "intended_label_confusion_matrix_8outputs": [
+    [
+      0,
+      0,
+      0,
+      2,
+      1,
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      3,
+      0,
+      5,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      2,
+      0,
+      4,
+      2
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      6,
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      1,
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      3,
+      0,
+      5,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "top2_accuracy_8outputs": 0.26,
+  "unsupported_output_predictions": 16,
+  "class_order": [
+    "angry",
+    "disgust",
+    "fearful",
+    "happy",
+    "neutral",
+    "sad"
+  ],
+  "confusion_matrix_8outputs": [
+    [
+      0,
+      0,
+      0,
+      2,
+      2,
+      0,
+      3,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      3,
+      0,
+      4,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      3,
+      0,
+      3,
+      1
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      5,
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      3,
+      0,
+      0,
+      1,
+      0,
+      2,
+      2
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      2,
+      0,
+      4,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "per_class": {
+    "angry": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 9.0
+    },
+    "disgust": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 9.0
+    },
+    "fearful": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "happy": {
+      "precision": 0.3125,
+      "recall": 0.625,
+      "f1-score": 0.4166666666666667,
+      "support": 8.0
+    },
+    "neutral": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "sad": {
+      "precision": 0.25,
+      "recall": 0.5,
+      "f1-score": 0.3333333333333333,
+      "support": 8.0
+    },
+    "micro avg": {
+      "precision": 0.2647058823529412,
+      "recall": 0.18,
+      "f1-score": 0.21428571428571427,
+      "support": 50.0
+    },
+    "macro avg": {
+      "precision": 0.09375,
+      "recall": 0.1875,
+      "f1-score": 0.125,
+      "support": 50.0
+    },
+    "weighted avg": {
+      "precision": 0.09,
+      "recall": 0.18,
+      "f1-score": 0.12,
+      "support": 50.0
+    }
+  },
+  "intended_label_per_class": {
+    "angry": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 6.0
+    },
+    "disgust": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 10.0
+    },
+    "fearful": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 9.0
+    },
+    "happy": {
+      "precision": 0.375,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.48,
+      "support": 9.0
+    },
+    "neutral": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 6.0
+    },
+    "sad": {
+      "precision": 0.3125,
+      "recall": 0.5,
+      "f1-score": 0.38461538461538464,
+      "support": 10.0
+    },
+    "micro avg": {
+      "precision": 0.3235294117647059,
+      "recall": 0.22,
+      "f1-score": 0.2619047619047619,
+      "support": 50.0
+    },
+    "macro avg": {
+      "precision": 0.11458333333333333,
+      "recall": 0.19444444444444442,
+      "f1-score": 0.14410256410256408,
+      "support": 50.0
+    },
+    "weighted avg": {
+      "precision": 0.13,
+      "recall": 0.22,
+      "f1-score": 0.16332307692307693,
+      "support": 50.0
+    }
+  },
+  "failures": []
+}

@@ -15,15 +15,16 @@ Usage:
 import argparse
 import os
 import glob
+import subprocess
 import numpy as np
 import pandas as pd
 import cv2
-import librosa
-try:
-    from moviepy import AudioFileClip           # moviepy >= 2.0
-except ImportError:
-    from moviepy.editor import AudioFileClip    # moviepy 1.x
+from imageio_ffmpeg import get_ffmpeg_exe
 from tqdm import tqdm
+try:
+    from .face_geometry import select_landmark_features
+except ImportError:
+    from face_geometry import select_landmark_features
 
 # --- config -----------------------------------------------------------
 EMOTIONS = {
@@ -38,6 +39,43 @@ AUDIO_SR = 16000
 N_MELS = 64
 AUDIO_DURATION = 3.0      # seconds, pad/crop to this
 AUDIO_FRAMES = int(AUDIO_DURATION * AUDIO_SR / 512)  # hop_length=512
+N_FFT = 2048
+HOP_LENGTH = 512
+
+
+def log_mel_spectrogram(y, sr=AUDIO_SR, n_mels=N_MELS, n_fft=N_FFT, hop_length=HOP_LENGTH):
+    """Compute a normalized log-mel spectrogram with NumPy.
+
+    Uses a centered Hann-window STFT and triangular HTK mel filters. Keeping
+    this dependency-light implementation in the shared preprocessing module
+    makes training and live inference use identical feature extraction.
+    """
+    y = np.asarray(y, dtype=np.float32)
+    padded = np.pad(y, (n_fft // 2, n_fft // 2))
+    windows = np.lib.stride_tricks.sliding_window_view(padded, n_fft)[::hop_length]
+    window = np.hanning(n_fft + 1)[:-1].astype(np.float32)
+    spectrum = np.fft.rfft(windows * window, axis=1)
+    power = (spectrum.real ** 2 + spectrum.imag ** 2).T.astype(np.float32)
+
+    hz_to_mel = lambda hz: 2595.0 * np.log10(1.0 + hz / 700.0)
+    mel_to_hz = lambda mel: 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
+    mel_points = np.linspace(hz_to_mel(0.0), hz_to_mel(sr / 2), n_mels + 2)
+    hz_points = mel_to_hz(mel_points)
+    fft_hz = np.linspace(0.0, sr / 2, n_fft // 2 + 1)
+    filters = np.zeros((n_mels, len(fft_hz)), dtype=np.float32)
+    for index in range(n_mels):
+        left, center, right = hz_points[index:index + 3]
+        filters[index] = np.maximum(
+            0.0,
+            np.minimum((fft_hz - left) / max(center - left, 1e-12),
+                       (right - fft_hz) / max(right - center, 1e-12)),
+        )
+        filters[index] *= 2.0 / max(right - left, 1e-12)
+    mel_power = filters @ power
+    mel_db = 10.0 * np.log10(np.maximum(mel_power, 1e-10))
+    mel_db -= mel_db.max()
+    mel_db = np.maximum(mel_db, -80.0)
+    return ((mel_db - mel_db.mean()) / (mel_db.std() + 1e-6)).astype(np.float32)
 
 
 def parse_filename(path):
@@ -83,29 +121,31 @@ def extract_frames(video_path, n_frames=N_FRAMES, size=FRAME_SIZE):
 
 def extract_audio_features(video_path):
     try:
-        clip = AudioFileClip(video_path)
-        arr = clip.to_soundarray(fps=AUDIO_SR)
-        clip.close()
+        decoded = subprocess.run(
+            [get_ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-nostdin",
+             "-i", video_path, "-t", str(AUDIO_DURATION), "-vn", "-ac", "1",
+             "-ar", str(AUDIO_SR), "-f", "f32le", "pipe:1"],
+            capture_output=True,
+            check=True,
+        )
+        y = np.frombuffer(decoded.stdout, dtype="<f4").copy()
+        if y.size == 0:
+            return None
     except Exception as e:
         print(f"\n[audio error] {video_path}: {e}")
         return None
-    y = arr.mean(axis=1) if arr.ndim > 1 else arr
-    y = y.astype(np.float32)
+    y = y.astype(np.float32, copy=False)
     target_len = int(AUDIO_DURATION * AUDIO_SR)
     if len(y) < target_len:
         y = np.pad(y, (0, target_len - len(y)))
     else:
         y = y[:target_len]
-    mel = librosa.feature.melspectrogram(y=y, sr=AUDIO_SR, n_mels=N_MELS, hop_length=512)
-    mel_db = librosa.power_to_db(mel, ref=np.max).astype(np.float32)  # (N_MELS, T)
-    # normalize to roughly [-1, 1]
-    mel_db = (mel_db - mel_db.mean()) / (mel_db.std() + 1e-6)
-    return mel_db
+    return log_mel_spectrogram(y)  # (N_MELS, T), normalized per clip
 
 
 def build_manifest(raw_dir):
     rows = []
-    for path in glob.glob(os.path.join(raw_dir, "**", "*.mp4"), recursive=True):
+    for path in sorted(glob.glob(os.path.join(raw_dir, "**", "*.mp4"), recursive=True)):
         meta = parse_filename(path)
         if meta is None or meta["emotion"] is None:
             continue
@@ -196,8 +236,13 @@ from torch.utils.data import Dataset
 
 
 class AVEmotionDataset(Dataset):
-    def __init__(self, data_dir, split):
+    def __init__(self, data_dir, split, include_landmarks=False, landmark_dir="data/landmarks",
+                 landmark_feature_mode="geometry", face_frame_dir=None):
         self.data_dir = data_dir
+        self.include_landmarks = include_landmarks
+        self.landmark_dir = landmark_dir
+        self.landmark_feature_mode = landmark_feature_mode
+        self.face_frame_dir = face_frame_dir
         manifest = pd.read_csv(os.path.join(data_dir, "manifest.csv"))
         self.manifest = manifest[manifest["split"] == split].reset_index(drop=True)
 
@@ -207,10 +252,23 @@ class AVEmotionDataset(Dataset):
     def __getitem__(self, idx):
         row = self.manifest.iloc[idx]
         npz = np.load(os.path.join(self.data_dir, f"{row['clip_id']}.npz"))
-        frames = torch.from_numpy(npz["frames"]).permute(0, 3, 1, 2)  # (N, 3, H, W)
+        if self.face_frame_dir:
+            face_path = os.path.join(self.face_frame_dir, f"{row['clip_id']}.npy")
+            frames_array = np.load(face_path).astype(np.float32, copy=False)
+        else:
+            frames_array = npz["frames"]
+        frames = torch.from_numpy(frames_array).permute(0, 3, 1, 2)  # (N, 3, H, W)
         mel = torch.from_numpy(npz["mel"]).unsqueeze(0)               # (1, N_MELS, T)
         label = torch.tensor(int(row["label"]), dtype=torch.long)
-        return {"frames": frames, "mel": mel, "label": label}
+        result = {"frames": frames, "mel": mel, "label": label}
+        if self.include_landmarks:
+            landmark_path = os.path.join(self.landmark_dir, f"{row['clip_id']}.npz")
+            with np.load(landmark_path) as landmarks:
+                features = select_landmark_features(landmarks["features"],
+                                                    self.landmark_feature_mode)
+                features[:, -1] = landmarks["valid_frames"].astype(np.float32)
+                result["landmarks"] = torch.from_numpy(features)
+        return result
 
 
 if __name__ == "__main__":

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f2">
+  <title>Affect — Audio Visual Emotion</title>
+  <link rel="stylesheet" href="/static/minimal.css?v=6">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Affect home"><span class="brand-mark">A</span> AFFECT</a>
+    <span class="top-note">AUDIO · VIDEO · EMOTION</span>
+    <span class="status"><i></i><span id="device-label">MODEL OFFLINE</span></span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="eyebrow">MULTIMODAL EMOTION RECOGNITION</p>
+      <h1>Read the<br><em>feeling.</em></h1>
+      <p class="lede">An experimental model reads vocal tone and facial expression from a short clip.</p>
+    </section>
+
+    <section class="workspace" aria-label="Emotion analysis">
+      <div class="panel upload-panel">
+        <div class="panel-head"><span>01 / INPUT</span><span>CLIP OR CAMERA</span></div>
+        <div class="input-modes" role="group" aria-label="Choose an input method">
+          <button class="mode-button active" id="upload-mode" type="button" aria-pressed="true">Upload clip</button>
+          <button class="mode-button" id="camera-mode" type="button" aria-pressed="false">Live camera</button>
+        </div>
+        <div id="upload-view">
+        <label class="dropzone" id="dropzone" for="video-file">
+          <input id="video-file" type="file" accept="video/mp4,.mp4">
+          <span class="upload-symbol">↑</span>
+          <strong id="file-title">Choose a video clip</strong>
+          <span id="file-hint">Drop an MP4 here or browse your files</span>
+        </label>
+        <div class="selected-clip" id="selected-clip" hidden>
+          <video id="preview" controls></video>
+          <div class="clip-actions">
+            <button id="replace-file" type="button">Replace clip</button>
+            <button id="remove-file" type="button" class="secondary">Remove</button>
+          </div>
+        </div>
+        </div>
+        <div class="camera-view" id="camera-view" hidden>
+          <video id="camera-preview" autoplay muted playsinline></video>
+          <div class="camera-controls">
+            <button id="camera-start" type="button">Start camera</button>
+            <button id="camera-stop" type="button" class="secondary" disabled>Stop</button>
+            <span id="camera-state" role="status">Camera off</span>
+          </div>
+          <p class="camera-note">Center your face and hold the expression in even lighting. Face-focused fusion crops the visual input around your face before analysis. Updates use 3-second windows.</p>
+        </div>
+        <div class="controls">
+          <label class="select-wrap" for="model-select">
+            <span>MODEL</span>
+            <select id="model-select" disabled><option>Loading…</option></select>
+          </label>
+          <button id="analyze" disabled><span>Analyze clip</span><b>↗</b></button>
+        </div>
+        <p id="message" class="message" role="status">Select a clip and a trained checkpoint to begin.</p>
+      </div>
+
+      <div class="panel result-panel" id="result-panel">
+        <div class="panel-head"><span>02 / MODEL READING</span><span id="result-model">AWAITING INPUT</span></div>
+        <div class="empty-state" id="empty-state">
+          <p>Upload a clip to view the model output.</p>
+        </div>
+        <div class="result-content" id="result-content" hidden>
+          <p class="eyebrow">PREDICTED EXPRESSION</p>
+          <div class="prediction" id="prediction">—</div>
+          <div class="confidence-row"><span>MODEL CONFIDENCE</span><strong id="confidence">—</strong></div>
+          <div class="confidence-track"><i id="confidence-bar"></i></div>
+          <div id="geometry-section" class="geometry-section" hidden>
+            <div class="scores-head"><span>FACE GEOMETRY</span><span>NORMALIZED</span></div>
+            <div id="geometry-list" class="geometry-list"></div>
+          </div>
+          <div class="scores-head"><span>CLASS SCORES</span><span>PROBABILITY</span></div>
+          <div id="scores" class="scores"></div>
+        </div>
+      </div>
+    </section>
+    <p class="disclaimer">Research demo only. Model predictions are estimates and do not establish a person’s actual emotional state.</p>
+  </main>
+
+  <footer><span>AFFECT / AV EMOTION RECOGNITION</span><span>LOCAL INFERENCE · RAVDESS</span></footer>
+  <script src="/static/app.js?v=11"></script>
+</body>
+</html>
