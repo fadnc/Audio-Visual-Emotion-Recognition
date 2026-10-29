@@ -174,7 +174,19 @@ The script prepares a balanced 50-clip CREMA-D sample (one clip per actor, seed 
 
 ## Results
 
-The table below is retained for context from the **legacy pre-migration pipeline** (per-clip mel normalization and the old decoding path). Those `.pt` files have no sidecars and cannot be evaluated by the current code. No post-migration benchmark is committed yet.
+### Post-migration baseline (current code, actors 1–8)
+
+The face-focused fusion checkpoint was retrained with the current pipeline (`global` mel normalization, shared 3-second window) on the default actors 1–8 split, using the recipe in [Reproducing the full retraining sequence](#reproducing-the-full-retraining-sequence). Training early-stopped at epoch 16 with the best validation AUROC at epoch 10 (0.927).
+
+| Evaluation | Model | Accuracy | Macro-F1 | Macro OvR AUROC |
+|:--|:--|--:|--:|--:|
+| RAVDESS test | Face-focused audio/video fusion | 0.633 | 0.563 | 0.973 |
+
+The test set is 60 clips from a single held-out actor, so this single-split estimate is noisy and not directly comparable to the legacy numbers below; run `affect-cv` for speaker-independent estimates. Only the fusion checkpoint was retrained; the baselines and the CREMA-D external check still refer to the legacy pipeline.
+
+### Legacy results
+
+The table below is retained for context from the **legacy pre-migration pipeline** (per-clip mel normalization and the old decoding path). Those `.pt` files have no sidecars and cannot be evaluated by the current code.
 
 | Evaluation | Model | Accuracy | Macro-F1 | Macro OvR AUROC |
 |:--|:--|--:|--:|--:|
