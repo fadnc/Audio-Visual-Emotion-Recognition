@@ -5,6 +5,32 @@ phased refactor from a script-based prototype to an installed package with
 config-driven checkpoints, statistical evaluation, and speaker-independent
 cross-validation.
 
+## [0.1.1] - 2026-10-29
+
+### Added
+
+- Post-migration RAVDESS baseline for the face-focused audio/video fusion
+  checkpoint on the default actors 1–8 split: test accuracy 0.633, macro-F1
+  0.563, macro OvR AUROC 0.973. Training early-stopped at epoch 16 with the
+  best validation AUROC (0.927) at epoch 10. The checkpoint and its sidecar
+  were generated locally and are not committed (`checkpoints/` is ignored).
+
+### Changed
+
+- README results now separate the post-migration baseline from the legacy
+  pre-migration table, and note that only the fusion checkpoint has been
+  retrained.
+- `reports/crema_d_external/results.md` is marked as predating the pipeline
+  migration.
+- Package version bumped to 0.1.1.
+
+### Verification
+
+- Full chain re-run end to end on CPU: `affect-preprocess` (480 clips) →
+  `extract_face_crops.py` (480 clips) → `affect-train` → `affect-eval`.
+- Web smoke test: `/api/models` lists `fusion_attention_face` and
+  `/api/predict` returns the 8-class distribution for a RAVDESS clip.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

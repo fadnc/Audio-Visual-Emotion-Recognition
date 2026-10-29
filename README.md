@@ -6,7 +6,9 @@ A PyTorch audio-visual emotion classifier trained on RAVDESS. The default model 
 > normalization changed. Checkpoints written before this refactor have no JSON
 > sidecar, so `affect-eval`, `affect-cv`, the web app, and the CREMA-D script skip
 > them. Retrain with the sequence below; new checkpoints always write
-> `<name>.json` next to `<name>.pt`.
+> `<name>.json` next to `<name>.pt`. The face-focused fusion checkpoint under
+> [Results](#results) was retrained with this pipeline; other legacy checkpoints
+> are still skipped.
 
 ## Highlights
 

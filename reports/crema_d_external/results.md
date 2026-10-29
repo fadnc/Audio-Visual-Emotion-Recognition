@@ -1,5 +1,10 @@
 # External evaluation: CREMA-D
 
+> **Legacy pipeline.** These results predate the 0.1.0 migration (shared-window
+> decoding, global training-split mel normalization). The evaluated checkpoint
+> had no sidecar and cannot be re-run with the current tools; retrain before
+> comparing new numbers against this report.
+
 ## Protocol
 
 Evaluated the trained model on 50 CREMA-D audiovisual clips from 50 distinct
