@@ -1,9 +1,13 @@
-"""Download and extract the eight RAVDESS speech video actor archives."""
+"""Download and extract RAVDESS speech video actor archives.
+
+``--actors`` accepts ranges and lists (``1-8``, ``1,3,5``, ``1-24``). Use
+``--actors 1-24`` for leave-actors-out cross-validation.
+"""
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import urlopen
 from zipfile import ZipFile
-import shutil
+import argparse
 import sys
 
 
@@ -54,18 +58,48 @@ def extract(archive: Path) -> None:
     print(f"Extracted {archive.name} into {RAW_DIR}")
 
 
+def parse_actors(spec: str) -> list[int]:
+    """Parse ``"1-8"``, ``"1,3,5"``, or ``"1-4,10"`` into sorted unique actors."""
+    actors: set[int] = set()
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            low_text, high_text = part.split("-", 1)
+            low, high = int(low_text), int(high_text)
+            if low > high:
+                raise ValueError(f"Invalid actor range: {part}")
+            actors.update(range(low, high + 1))
+        else:
+            actors.add(int(part))
+    if not actors:
+        raise ValueError("No actors selected.")
+    if min(actors) < 1 or max(actors) > 24:
+        raise ValueError("RAVDESS actors must be in 1..24.")
+    return sorted(actors)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--actors", default="1-8",
+                        help="Actor selection such as '1-8', '1,3,5', or '1-24'.")
+    args = parser.parse_args()
+    try:
+        actors = parse_actors(args.actors)
+    except ValueError as exc:
+        parser.error(str(exc))
+
     DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     archives = {}
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        futures = {pool.submit(download, actor): actor for actor in range(1, 9)}
+    with ThreadPoolExecutor(max_workers=min(8, len(actors))) as pool:
+        futures = {pool.submit(download, actor): actor for actor in actors}
         for future in as_completed(futures):
             actor = futures[future]
             archives[actor] = future.result()
-    for actor in range(1, 9):
-        archive = archives[actor]
-        extract(archive)
+    for actor in actors:
+        extract(archives[actor])
     count = sum(1 for _ in RAW_DIR.rglob("*.mp4"))
     print(f"Ready: {count} MP4 clips under {RAW_DIR}")
     if count == 0:

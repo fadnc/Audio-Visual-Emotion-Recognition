@@ -20,11 +20,14 @@ let captureTimer = null;
 
 const titleCase = value => value.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
 const percent = value => `${Math.round(value * 100)}%`;
-const modelLabel = model => model === 'fusion_attention_landmarks'
-  ? 'Fusion + face landmarks' : model === 'fusion_attention_tuned'
-    ? 'Fusion + tuned attention' : model === 'video_face'
-      ? 'Face-focused video' : model === 'fusion_attention_face'
-        ? 'Face-focused audio + video' : titleCase(model);
+const MODEL_LABELS = {
+  fusion_attention_face: 'Face-focused audio + video',
+  video_face: 'Face-focused video',
+  fusion_attention_tuned: 'Fusion + tuned attention',
+  fusion_attention_landmarks: 'Fusion + face landmarks',
+};
+const modelName = model => model.split('/').pop();
+const modelLabel = model => MODEL_LABELS[modelName(model)] ?? titleCase(modelName(model));
 
 async function loadModels() {
   try {
@@ -40,7 +43,11 @@ async function loadModels() {
       return;
     }
     const preferredOrder = ['fusion_attention_face', 'video_face', 'video', 'fusion_attention_tuned', 'fusion_attention_landmarks', 'fusion_attention', 'fusion_late', 'audio'];
-    const availableModels = [...data.models].sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b));
+    const rank = model => {
+      const index = preferredOrder.indexOf(modelName(model));
+      return index === -1 ? preferredOrder.length : index;
+    };
+    const availableModels = [...data.models].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     for (const model of availableModels) modelSelect.add(new Option(modelLabel(model), model));
     updateButton();
   } catch {
@@ -201,8 +208,10 @@ function stopCamera() {
 
 function setFile(file) {
   if (!file) return;
-  if (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
-    message.textContent = 'Please choose an MP4 video.';
+  const fileName = file.name.toLowerCase();
+  const supportedType = file.type === 'video/mp4' || file.type === 'video/webm';
+  if (!supportedType && !fileName.endsWith('.mp4') && !fileName.endsWith('.webm')) {
+    message.textContent = 'Please choose an MP4 or WebM video.';
     return;
   }
   if (file.size > 200 * 1024 * 1024) {
@@ -235,7 +244,7 @@ function clearFile() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = null;
   document.querySelector('#file-title').textContent = 'Choose a video clip';
-  document.querySelector('#file-hint').textContent = 'Drop an MP4 here or browse your files';
+  document.querySelector('#file-hint').textContent = 'Drop an MP4 or WebM here or browse your files';
   document.querySelector('#empty-state').hidden = false;
   document.querySelector('#result-content').hidden = true;
   document.querySelector('#result-model').textContent = 'AWAITING INPUT';

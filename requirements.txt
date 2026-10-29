@@ -1,10 +1,12 @@
+# Core runtime dependencies. Keep in sync with pyproject.toml.
+# Optional extras: pip install -e ".[dev]" or pip install -e ".[wavlm]"
 torch>=2.0
 torchvision>=0.15
-torchaudio>=2.0
-opencv-contrib-python>=5.0
+opencv-contrib-python>=4.8
 imageio-ffmpeg>=0.4.9
-mediapipe>=1.1.1
+mediapipe>=0.10.9
 scikit-learn>=1.3
+scipy>=1.10
 pandas>=2.0
 numpy>=1.24
 matplotlib>=3.7
